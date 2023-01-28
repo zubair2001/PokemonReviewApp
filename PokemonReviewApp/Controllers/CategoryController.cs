@@ -83,5 +83,55 @@ namespace PokemonReviewApp.Controllers
 
             return Ok("Successfully Created");
         }
+
+        [HttpPut("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult UpdateCategory(int categoryId,[FromBody]CategoryDto updatedCategory)
+        {
+            if(updatedCategory == null)
+                return BadRequest(ModelState);
+
+            if (categoryId != updatedCategory.Id)
+                return BadRequest(ModelState);
+
+            if (!_categoryRepository.CategoryExists(categoryId))
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var categoryMap = _mapper.Map<Category>(updatedCategory);
+            if (!_categoryRepository.UpdateCategory(categoryMap))
+            {
+                ModelState.AddModelError("", $"Something went wrong updating the record {categoryMap.Name}");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully Updated");
+        }
+
+        [HttpDelete("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteCategory(int categoryId)
+        {
+            if (!_categoryRepository.CategoryExists(categoryId))
+                return NotFound();
+
+            var category = _categoryRepository.GetCategory(categoryId);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_categoryRepository.DeleteCategory(category))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting the record {category.Name}");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully Deleted");
+        }
     }
 }
